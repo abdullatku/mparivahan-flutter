@@ -29,6 +29,7 @@ class ChallanSearchProvider extends ChangeNotifier {
     try {
       challans = await _apiService.fetchChallanInfo(normalized);
       if (challans.isEmpty) {
+        challans = const [];
         error = 'No challans found.';
       }
     } catch (e) {

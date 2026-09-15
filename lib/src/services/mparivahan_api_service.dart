@@ -21,17 +21,20 @@ class MParivahanApiService {
     bool? useMockData,
     String? vehicleApiEndpoint,
     String? challanApiEndpoint,
+    String? apiKey,
   })  : _client = client ?? http.Client(),
         _useMockData = useMockData ?? AppConfig.useMockData,
         _vehicleApiEndpoint =
             vehicleApiEndpoint ?? AppConfig.vehicleApiEndpoint,
         _challanApiEndpoint =
-            challanApiEndpoint ?? AppConfig.challanApiEndpoint;
+            challanApiEndpoint ?? AppConfig.challanApiEndpoint,
+        _apiKey = apiKey ?? AppConfig.apiKey;
 
   final http.Client _client;
   final bool _useMockData;
   final String _vehicleApiEndpoint;
   final String _challanApiEndpoint;
+  final String _apiKey;
 
   Future<Vehicle> fetchVehicleInfo(String registrationNumber) async {
     if (_useMockData || _vehicleApiEndpoint.isEmpty) {
@@ -127,12 +130,12 @@ class MParivahanApiService {
   }
 
   Map<String, String> get _headers {
-    if (AppConfig.apiKey.isEmpty) {
+    if (_apiKey.isEmpty) {
       return const {'Accept': 'application/json'};
     }
     return {
       'Accept': 'application/json',
-      'x-api-key': AppConfig.apiKey,
+      'x-api-key': _apiKey,
     };
   }
 
