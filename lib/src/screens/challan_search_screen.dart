@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/mparivahan_provider.dart';
+import '../providers/challan_search_provider.dart';
 
 class ChallanSearchScreen extends StatefulWidget {
   const ChallanSearchScreen({super.key});
@@ -11,7 +11,8 @@ class ChallanSearchScreen extends StatefulWidget {
 }
 
 class _ChallanSearchScreenState extends State<ChallanSearchScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _controller = TextEditingController();
 
   @override
   void dispose() {
@@ -21,79 +22,111 @@ class _ChallanSearchScreenState extends State<ChallanSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<MParivahanProvider>(
-      builder: (context, provider, _) {
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            const Text(
-              'Search by vehicle number or challan identifier to view sample challan results.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Vehicle or challan number',
-                hintText: 'TS09AB1234',
-              ),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: provider.isLoadingChallans
-                  ? null
-                  : () => provider.lookupChallans(_controller.text),
-              child: provider.isLoadingChallans
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Check challans'),
-            ),
-            if (provider.challanError != null) ...<Widget>[
-              const SizedBox(height: 12),
-              Text(
-                provider.challanError!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ],
-            if (!provider.isLoadingChallans &&
-                provider.challanError == null &&
-                provider.challans.isEmpty) ...<Widget>[
-              const SizedBox(height: 20),
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'No challans found yet. Search using a sample number to load results.',
+    return Scaffold(
+      appBar: AppBar(title: const Text('Challan Search')),
+      body: Consumer<ChallanSearchProvider>(
+        builder: (context, provider, _) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    controller: _controller,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Registration/Challan Number',
+                      hintText: 'e.g. DL8CAF5039 or HR26CH1234',
+                    ),
+                    validator: (value) {
+                      final text = (value ?? '').trim();
+                      if (text.isEmpty) return 'Input is required';
+                      if (text.replaceAll(' ', '').length < 4) {
+                        return 'Please enter a valid value';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-            ],
-            ...provider.challans.map(
-              (challan) => Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Card(
-                  child: ListTile(
-                    title: Text(challan.number),
-                    subtitle: Text('${challan.location} • ${challan.issuedOn}'),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        Text(challan.amount),
-                        Text(challan.status),
-                      ],
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: provider.isLoading
+                      ? null
+                      : () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            provider.searchChallan(_controller.text);
+                          }
+                        },
+                  child: const Text('Search Challan'),
+                ),
+                if (provider.isLoading) ...[
+                  const SizedBox(height: 24),
+                  const Center(child: CircularProgressIndicator()),
+                ],
+                if (provider.error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    provider.error!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ],
+                if (provider.challans.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  ...provider.challans.map(
+                    (challan) => Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Challan ${challan.challanNumber}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            _Detail(label: 'Vehicle', value: challan.vehicleNumber),
+                            _Detail(label: 'Violation', value: challan.violationType),
+                            _Detail(label: 'Amount', value: '₹${challan.amount}'),
+                            _Detail(label: 'Date', value: challan.date),
+                            _Detail(label: 'Location', value: challan.location),
+                            _Detail(label: 'Status', value: challan.status),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                ],
+              ],
             ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Detail extends StatelessWidget {
+  const _Detail({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: [
+            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+            TextSpan(text: value),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
