@@ -21,7 +21,11 @@ class Vehicle {
     final ownerValue = json['owner'];
     final ownerJson = ownerValue is Map
         ? ownerValue.map((key, value) => MapEntry(key.toString(), value))
-        : json;
+        : <String, dynamic>{
+            'owner_name': json['owner_name'],
+            'owner_address': json['owner_address'],
+            'owner_phone': json['owner_phone'],
+          };
 
     return Vehicle(
       registrationNumber:

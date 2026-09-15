@@ -63,12 +63,15 @@ class _HomeActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        leading: Icon(icon, size: 32),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: onTap,
+      child: Semantics(
+        button: true,
+        child: ListTile(
+          leading: Icon(icon, size: 32),
+          title: Text(title),
+          subtitle: Text(subtitle),
+          trailing: const Icon(Icons.arrow_forward_ios),
+          onTap: onTap,
+        ),
       ),
     );
   }
