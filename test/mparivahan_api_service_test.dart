@@ -69,11 +69,57 @@ void main() {
       expect(vehicle.owner.address, 'Hyderabad');
     });
 
+    test('parses wrapped list payloads', () async {
+      final service = MParivahanApiService(
+        useMockData: false,
+        vehicleApiEndpoint: 'https://example.com/vehicle',
+        client: MockClient(
+          (request) async => http.Response(
+            jsonEncode({
+              'data': [
+                {
+                  'registration_number': 'KA01AB1234',
+                  'make': 'Mahindra',
+                  'model': 'XUV700',
+                  'registration_date': '2023-03-07',
+                  'fuel_type': 'Diesel',
+                  'owner': {
+                    'name': 'Meera',
+                    'address': 'Bengaluru',
+                    'phone': '99XXXXXX11',
+                  },
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+      );
+
+      final vehicle = await service.fetchVehicleInfo('KA01AB1234');
+
+      expect(vehicle.registrationNumber, 'KA01AB1234');
+      expect(vehicle.make, 'Mahindra');
+    });
+
     test('throws on non-200 responses', () async {
       final service = MParivahanApiService(
         useMockData: false,
         vehicleApiEndpoint: 'https://example.com/vehicle',
         client: MockClient((request) async => http.Response('failed', 500)),
+      );
+
+      expect(
+        () => service.fetchVehicleInfo('DL8CAF5039'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('throws on invalid JSON responses', () async {
+      final service = MParivahanApiService(
+        useMockData: false,
+        vehicleApiEndpoint: 'https://example.com/vehicle',
+        client: MockClient((request) async => http.Response('not-json', 200)),
       );
 
       expect(
@@ -147,6 +193,19 @@ void main() {
         useMockData: false,
         challanApiEndpoint: 'https://example.com/challan',
         client: MockClient((request) async => http.Response('failed', 404)),
+      );
+
+      expect(
+        () => service.fetchChallanInfo('DL8CAF5039'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+
+    test('throws on invalid JSON responses', () async {
+      final service = MParivahanApiService(
+        useMockData: false,
+        challanApiEndpoint: 'https://example.com/challan',
+        client: MockClient((request) async => http.Response('not-json', 200)),
       );
 
       expect(

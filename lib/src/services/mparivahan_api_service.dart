@@ -49,12 +49,15 @@ class MParivahanApiService {
           'Vehicle API failed with status ${response.statusCode}.');
     }
 
-    final decoded = jsonDecode(response.body);
+    final decoded = _decodeJson(response.body);
     if (decoded is Map) {
       final decodedMap = _toJsonMap(decoded);
       final data = decodedMap['data'];
       if (data is Map) {
         return Vehicle.fromJson(_toJsonMap(data));
+      }
+      if (data is List && data.isNotEmpty) {
+        return Vehicle.fromJson(_toJsonMap(data.first));
       }
       return Vehicle.fromJson(decodedMap);
     }
@@ -81,7 +84,7 @@ class MParivahanApiService {
           'Challan API failed with status ${response.statusCode}.');
     }
 
-    final decoded = jsonDecode(response.body);
+    final decoded = _decodeJson(response.body);
     if (decoded is List) {
       return _toChallanList(decoded);
     }
@@ -113,6 +116,14 @@ class MParivahanApiService {
       );
     }
     throw ApiException('Unexpected response item format.');
+  }
+
+  Object? _decodeJson(String body) {
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      throw ApiException('Unexpected response body format.');
+    }
   }
 
   Map<String, String> get _headers {
