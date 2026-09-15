@@ -1,0 +1,11 @@
+include ':app'
+
+local_engine_repo = System.getenv("LOCAL_ENGINE_REPO")
+if (local_engine_repo != null) {
+    println("Adding local engine repo: $local_engine_repo")
+    repositories {
+        maven {
+            url local_engine_repo
+        }
+    }
+}
