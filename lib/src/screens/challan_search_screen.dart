@@ -70,7 +70,8 @@ class _ChallanSearchScreenState extends State<ChallanSearchScreen> {
                   const SizedBox(height: 16),
                   Text(
                     provider.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ],
                 if (provider.challans.isNotEmpty) ...[
@@ -84,12 +85,17 @@ class _ChallanSearchScreenState extends State<ChallanSearchScreen> {
                           children: [
                             Text(
                               'Challan ${challan.challanNumber}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
-                            _Detail(label: 'Vehicle', value: challan.vehicleNumber),
-                            _Detail(label: 'Violation', value: challan.violationType),
-                            _Detail(label: 'Amount', value: '₹${challan.amount}'),
+                            _Detail(
+                                label: 'Vehicle', value: challan.vehicleNumber),
+                            _Detail(
+                                label: 'Violation',
+                                value: challan.violationType),
+                            _Detail(
+                                label: 'Amount', value: '₹${challan.amount}'),
                             _Detail(label: 'Date', value: challan.date),
                             _Detail(label: 'Location', value: challan.location),
                             _Detail(label: 'Status', value: challan.status),
@@ -122,7 +128,9 @@ class _Detail extends StatelessWidget {
         text: TextSpan(
           style: DefaultTextStyle.of(context).style,
           children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+            TextSpan(
+                text: '$label: ',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             TextSpan(text: value),
           ],
         ),

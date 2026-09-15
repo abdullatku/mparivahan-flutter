@@ -43,7 +43,9 @@ class _VehicleSearchScreenState extends State<VehicleSearchScreen> {
                     ),
                     validator: (value) {
                       final text = (value ?? '').trim();
-                      if (text.isEmpty) return 'Registration number is required';
+                      if (text.isEmpty) {
+                        return 'Registration number is required';
+                      }
                       if (text.replaceAll(' ', '').length < 6) {
                         return 'Please enter a valid registration number';
                       }
@@ -70,7 +72,8 @@ class _VehicleSearchScreenState extends State<VehicleSearchScreen> {
                   const SizedBox(height: 16),
                   Text(
                     provider.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style:
+                        TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ],
                 if (provider.vehicle != null) ...[
@@ -83,22 +86,36 @@ class _VehicleSearchScreenState extends State<VehicleSearchScreen> {
                         children: [
                           const Text(
                             'Vehicle Details',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 8),
-                          _Detail(label: 'Registration', value: provider.vehicle!.registrationNumber),
+                          _Detail(
+                              label: 'Registration',
+                              value: provider.vehicle!.registrationNumber),
                           _Detail(label: 'Make', value: provider.vehicle!.make),
-                          _Detail(label: 'Model', value: provider.vehicle!.model),
-                          _Detail(label: 'Registration Date', value: provider.vehicle!.registrationDate),
-                          _Detail(label: 'Fuel Type', value: provider.vehicle!.fuelType),
+                          _Detail(
+                              label: 'Model', value: provider.vehicle!.model),
+                          _Detail(
+                              label: 'Registration Date',
+                              value: provider.vehicle!.registrationDate),
+                          _Detail(
+                              label: 'Fuel Type',
+                              value: provider.vehicle!.fuelType),
                           const Divider(),
                           const Text(
                             'Owner Details',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          _Detail(label: 'Name', value: provider.vehicle!.owner.name),
-                          _Detail(label: 'Address', value: provider.vehicle!.owner.address),
-                          _Detail(label: 'Phone', value: provider.vehicle!.owner.phone),
+                          _Detail(
+                              label: 'Name',
+                              value: provider.vehicle!.owner.name),
+                          _Detail(
+                              label: 'Address',
+                              value: provider.vehicle!.owner.address),
+                          _Detail(
+                              label: 'Phone',
+                              value: provider.vehicle!.owner.phone),
                         ],
                       ),
                     ),
@@ -127,7 +144,9 @@ class _Detail extends StatelessWidget {
         text: TextSpan(
           style: DefaultTextStyle.of(context).style,
           children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+            TextSpan(
+                text: '$label: ',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             TextSpan(text: value),
           ],
         ),

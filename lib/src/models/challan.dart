@@ -20,8 +20,11 @@ class Challan {
   factory Challan.fromJson(Map<String, dynamic> json) {
     return Challan(
       challanNumber: (json['challan_number'] ?? json['id'] ?? 'N/A').toString(),
-      vehicleNumber: (json['vehicle_number'] ?? json['registration_number'] ?? 'N/A').toString(),
-      violationType: (json['violation_type'] ?? json['offense'] ?? 'N/A').toString(),
+      vehicleNumber:
+          (json['vehicle_number'] ?? json['registration_number'] ?? 'N/A')
+              .toString(),
+      violationType:
+          (json['violation_type'] ?? json['offense'] ?? 'N/A').toString(),
       amount: (json['amount'] ?? json['fine_amount'] ?? '0').toString(),
       date: (json['date'] ?? json['violation_date'] ?? 'N/A').toString(),
       location: (json['location'] ?? json['place'] ?? 'N/A').toString(),

@@ -14,7 +14,8 @@ class VehicleSearchProvider extends ChangeNotifier {
   bool isLoading = false;
 
   Future<void> searchVehicle(String registrationNumber) async {
-    final normalized = registrationNumber.trim().toUpperCase().replaceAll(' ', '');
+    final normalized =
+        registrationNumber.trim().toUpperCase().replaceAll(' ', '');
     if (!_isValidRegistration(normalized)) {
       error = 'Enter a valid vehicle registration number.';
       vehicle = null;

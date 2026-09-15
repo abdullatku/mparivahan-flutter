@@ -16,72 +16,103 @@ class ApiException implements Exception {
 }
 
 class MParivahanApiService {
-  MParivahanApiService({http.Client? client}) : _client = client ?? http.Client();
+  MParivahanApiService({
+    http.Client? client,
+    bool? useMockData,
+    String? vehicleApiEndpoint,
+    String? challanApiEndpoint,
+  })  : _client = client ?? http.Client(),
+        _useMockData = useMockData ?? AppConfig.useMockData,
+        _vehicleApiEndpoint =
+            vehicleApiEndpoint ?? AppConfig.vehicleApiEndpoint,
+        _challanApiEndpoint =
+            challanApiEndpoint ?? AppConfig.challanApiEndpoint;
 
   final http.Client _client;
+  final bool _useMockData;
+  final String _vehicleApiEndpoint;
+  final String _challanApiEndpoint;
 
   Future<Vehicle> fetchVehicleInfo(String registrationNumber) async {
-    if (AppConfig.useMockData || AppConfig.vehicleApiEndpoint.isEmpty) {
+    if (_useMockData || _vehicleApiEndpoint.isEmpty) {
       await Future<void>.delayed(const Duration(milliseconds: 450));
       return _mockVehicle(registrationNumber);
     }
 
-    final uri = Uri.parse(AppConfig.vehicleApiEndpoint).replace(
+    final uri = Uri.parse(_vehicleApiEndpoint).replace(
       queryParameters: {'registration_number': registrationNumber},
     );
 
     final response = await _client.get(uri, headers: _headers);
     if (response.statusCode != 200) {
-      throw ApiException('Vehicle API failed with status ${response.statusCode}.');
+      throw ApiException(
+          'Vehicle API failed with status ${response.statusCode}.');
     }
 
     final decoded = jsonDecode(response.body);
-    if (decoded is Map<String, dynamic>) {
-      return Vehicle.fromJson((decoded['data'] as Map<String, dynamic>?) ?? decoded);
+    if (decoded is Map) {
+      final decodedMap = _toJsonMap(decoded);
+      final data = decodedMap['data'];
+      if (data is Map) {
+        return Vehicle.fromJson(_toJsonMap(data));
+      }
+      return Vehicle.fromJson(decodedMap);
     }
-    if (decoded is List && decoded.isNotEmpty && decoded.first is Map<String, dynamic>) {
-      return Vehicle.fromJson(decoded.first as Map<String, dynamic>);
+    if (decoded is List && decoded.isNotEmpty) {
+      return Vehicle.fromJson(_toJsonMap(decoded.first));
     }
 
     throw ApiException('Unexpected vehicle API response format.');
   }
 
   Future<List<Challan>> fetchChallanInfo(String query) async {
-    if (AppConfig.useMockData || AppConfig.challanApiEndpoint.isEmpty) {
+    if (_useMockData || _challanApiEndpoint.isEmpty) {
       await Future<void>.delayed(const Duration(milliseconds: 450));
       return _mockChallans(query);
     }
 
-    final uri = Uri.parse(AppConfig.challanApiEndpoint).replace(
+    final uri = Uri.parse(_challanApiEndpoint).replace(
       queryParameters: {'query': query},
     );
 
     final response = await _client.get(uri, headers: _headers);
     if (response.statusCode != 200) {
-      throw ApiException('Challan API failed with status ${response.statusCode}.');
+      throw ApiException(
+          'Challan API failed with status ${response.statusCode}.');
     }
 
     final decoded = jsonDecode(response.body);
     if (decoded is List) {
-      return decoded
-          .whereType<Map<String, dynamic>>()
-          .map(Challan.fromJson)
-          .toList(growable: false);
+      return _toChallanList(decoded);
     }
-    if (decoded is Map<String, dynamic>) {
-      final data = decoded['data'];
+    if (decoded is Map) {
+      final decodedMap = _toJsonMap(decoded);
+      final data = decodedMap['data'];
       if (data is List) {
-        return data
-            .whereType<Map<String, dynamic>>()
-            .map(Challan.fromJson)
-            .toList(growable: false);
+        return _toChallanList(data);
       }
-      if (data is Map<String, dynamic>) {
-        return [Challan.fromJson(data)];
+      if (data is Map) {
+        return [Challan.fromJson(_toJsonMap(data))];
       }
     }
 
     throw ApiException('Unexpected challan API response format.');
+  }
+
+  List<Challan> _toChallanList(List<dynamic> decoded) {
+    return decoded
+        .map(_toJsonMap)
+        .map(Challan.fromJson)
+        .toList(growable: false);
+  }
+
+  Map<String, dynamic> _toJsonMap(Object? value) {
+    if (value is Map) {
+      return value.map(
+        (key, value) => MapEntry(key.toString(), value),
+      );
+    }
+    throw ApiException('Unexpected response item format.');
   }
 
   Map<String, String> get _headers {

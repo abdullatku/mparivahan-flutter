@@ -22,7 +22,8 @@ class Vehicle {
 
     return Vehicle(
       registrationNumber:
-          (json['registration_number'] ?? json['rc_number'] ?? 'N/A').toString(),
+          (json['registration_number'] ?? json['rc_number'] ?? 'N/A')
+              .toString(),
       make: (json['make'] ?? json['brand'] ?? 'N/A').toString(),
       model: (json['model'] ?? json['vehicle_model'] ?? 'N/A').toString(),
       registrationDate:
