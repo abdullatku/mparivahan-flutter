@@ -1,0 +1,137 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import '../config/app_config.dart';
+import '../models/challan.dart';
+import '../models/vehicle.dart';
+
+class ApiException implements Exception {
+  ApiException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+class MParivahanApiService {
+  MParivahanApiService({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+
+  Future<Vehicle> fetchVehicleInfo(String registrationNumber) async {
+    if (AppConfig.useMockData || AppConfig.vehicleApiEndpoint.isEmpty) {
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      return _mockVehicle(registrationNumber);
+    }
+
+    final uri = Uri.parse(AppConfig.vehicleApiEndpoint).replace(
+      queryParameters: {'registration_number': registrationNumber},
+    );
+
+    final response = await _client.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw ApiException('Vehicle API failed with status ${response.statusCode}.');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      return Vehicle.fromJson((decoded['data'] as Map<String, dynamic>?) ?? decoded);
+    }
+    if (decoded is List && decoded.isNotEmpty && decoded.first is Map<String, dynamic>) {
+      return Vehicle.fromJson(decoded.first as Map<String, dynamic>);
+    }
+
+    throw ApiException('Unexpected vehicle API response format.');
+  }
+
+  Future<List<Challan>> fetchChallanInfo(String query) async {
+    if (AppConfig.useMockData || AppConfig.challanApiEndpoint.isEmpty) {
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      return _mockChallans(query);
+    }
+
+    final uri = Uri.parse(AppConfig.challanApiEndpoint).replace(
+      queryParameters: {'query': query},
+    );
+
+    final response = await _client.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw ApiException('Challan API failed with status ${response.statusCode}.');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is List) {
+      return decoded
+          .whereType<Map<String, dynamic>>()
+          .map(Challan.fromJson)
+          .toList(growable: false);
+    }
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'];
+      if (data is List) {
+        return data
+            .whereType<Map<String, dynamic>>()
+            .map(Challan.fromJson)
+            .toList(growable: false);
+      }
+      if (data is Map<String, dynamic>) {
+        return [Challan.fromJson(data)];
+      }
+    }
+
+    throw ApiException('Unexpected challan API response format.');
+  }
+
+  Map<String, String> get _headers {
+    if (AppConfig.apiKey.isEmpty) {
+      return const {'Accept': 'application/json'};
+    }
+    return {
+      'Accept': 'application/json',
+      'x-api-key': AppConfig.apiKey,
+    };
+  }
+
+  Vehicle _mockVehicle(String registrationNumber) {
+    return Vehicle.fromJson({
+      'registration_number': registrationNumber,
+      'make': 'TATA',
+      'model': 'NEXON',
+      'registration_date': '2022-01-18',
+      'fuel_type': 'Petrol',
+      'owner': {
+        'name': 'Ravi Kumar',
+        'address': 'Sector 45, Gurgaon, Haryana',
+        'phone': '98XXXXXX21',
+      },
+    });
+  }
+
+  List<Challan> _mockChallans(String query) {
+    final normalized = query.toUpperCase();
+    final records = [
+      {
+        'challan_number': 'HR26CH1234',
+        'vehicle_number': normalized,
+        'violation_type': 'Over Speeding',
+        'amount': '1500',
+        'date': '2026-06-10',
+        'location': 'MG Road, Gurugram',
+        'status': 'Unpaid',
+      },
+      {
+        'challan_number': 'DL8CAF9991',
+        'vehicle_number': normalized,
+        'violation_type': 'No Parking Zone',
+        'amount': '500',
+        'date': '2026-07-02',
+        'location': 'Connaught Place, New Delhi',
+        'status': 'Paid',
+      },
+    ];
+
+    return records.map(Challan.fromJson).toList(growable: false);
+  }
+}

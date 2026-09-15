@@ -1,0 +1,83 @@
+name: Build release APK
+
+on:
+  push:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter SDK
+        run: |
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter.git "$HOME/flutter"
+          echo "$HOME/flutter/bin" >> "$GITHUB_PATH"
+          flutter --version
+
+      - name: Ensure Android platform files exist
+        run: flutter create --platforms=android .
+
+      - name: Create demo signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Capture release metadata
+        id: meta
+        run: |
+          version_line=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          version_name=${version_line%%+*}
+          version_code=${version_line##*+}
+          apk_name="mparivahan-${version_name}+${version_code}-release.apk"
+          echo "version_name=${version_name}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${version_code}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=${apk_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Build obfuscated release APK
+        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+
+      - name: Rename APK output
+        run: mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/${{ steps.meta.outputs.apk_name }}"
+
+      - name: Copy APK to release directory
+        run: |
+          mkdir -p release
+          cp "build/app/outputs/flutter-apk/${{ steps.meta.outputs.apk_name }}" "release/${{ steps.meta.outputs.apk_name }}"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.apk_name }}
+          path: |
+            release/${{ steps.meta.outputs.apk_name }}
+            build/app/outputs/symbols
+          if-no-files-found: error
+
+      - name: Attach APK to published release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "release/${{ steps.meta.outputs.apk_name }}" --clobber
