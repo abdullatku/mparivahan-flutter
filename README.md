@@ -77,7 +77,7 @@ The workflow in `.github/workflows/release.yml` runs on:
 
 Workflow outputs:
 - APK artifact name: `mparivahan-<versionName>+<versionCode>-release.apk`
-- APK artifact path: `build/app/outputs/flutter-apk/`
+- APK staging directory in CI job workspace: `release/`
 - Obfuscation symbols artifact path: `build/app/outputs/symbols`
 
 Download locations:
